@@ -5,12 +5,11 @@ import (
 )
 
 
-type TASLock struct {
+type TTASLock struct {
 	lock atomic.Bool
 }
 
-func (m *TASLock) Lock(i int) {
-	// fmt.Println("Locking", i)
+func (m *TTASLock) Lock(i int) {
 	for {
 		if !m.lock.Load() {
 			if m.lock.CompareAndSwap(false, true) {
@@ -20,7 +19,6 @@ func (m *TASLock) Lock(i int) {
 	}
 }
 
-func (m *TASLock) Unlock(i int) {
-	// fmt.Println("Unlocking", i)
+func (m *TTASLock) Unlock(i int) {
 	m.lock.Store(false)
 }

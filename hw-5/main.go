@@ -7,12 +7,15 @@ import (
 )
 
 var x int = 0
-var max int = 1000
+var max int = 100000
 
-func increment(i int, m *TASLock, wg *sync.WaitGroup) {
+type Lock interface {
+	Lock(i int)
+	Unlock(i int)
+}
+
+func increment(i int, m Lock, wg *sync.WaitGroup) {
 	for {
-		// wait for 2 sec
-		time.Sleep(10 * time.Millisecond)
 		m.Lock(i)
 		if x >= max {
 			m.Unlock(i)
@@ -25,19 +28,21 @@ func increment(i int, m *TASLock, wg *sync.WaitGroup) {
 	}
 }
 
-
 func main() {
 
 	start := time.Now()
 	var wg sync.WaitGroup
 
-	var m TASLock
+	minDelay := 1 * time.Millisecond
+	maxDelay := 10 * time.Millisecond
+	var m Lock = NewBackoffLock(minDelay, maxDelay)
+	// var m TASLock
 
 	for i := 0; i < max; i++ {
 		wg.Add(1)
-		go increment(i, &m, &wg)
+		go increment(i, m, &wg)
 	}
 	wg.Wait()
 	elapsed := time.Since(start)
-	fmt.Printf("Time elapsed: %s\n", elapsed) 
+	fmt.Printf("Time elapsed: %s\n", elapsed)
 }
