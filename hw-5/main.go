@@ -7,7 +7,9 @@ import (
 )
 
 var x int = 0
-var max int = 2000
+
+const numGoRoutine int = 200
+const max = 20000
 
 type Lock interface {
 	Lock(i int)
@@ -16,6 +18,7 @@ type Lock interface {
 
 func increment(i int, m Lock, wg *sync.WaitGroup) {
 	for {
+
 		m.Lock(i)
 		if x >= max {
 			m.Unlock(i)
@@ -25,6 +28,23 @@ func increment(i int, m Lock, wg *sync.WaitGroup) {
 		fmt.Println(x)
 		x++
 		m.Unlock(i)
+	}
+}
+
+func incrementCLH(i int, m *CLHLock, wg *sync.WaitGroup) {
+	for {
+
+		myNode := &QNode{locked: false}
+		myPred := &QNode{locked: false}
+		m.Lock(i, myNode, myPred)
+		if x >= max {
+			m.Unlock(i, myNode, myPred)
+			wg.Done()
+			return
+		}
+		fmt.Println(x)
+		x++
+		m.Unlock(i, myNode, myPred)
 	}
 }
 
@@ -39,11 +59,12 @@ func main() {
 	// maxDelay := 10 * time.Millisecond
 	// var m Lock = NewBackoffLock(minDelay, maxDelay)
 
-	var m = NewALock(max)
+	// var m = NewALock(max)
+	var m = NewCLHLock()
 
-	for i := 0; i < max; i++ {
+	for i := 0; i < numGoRoutine; i++ {
 		wg.Add(1)
-		go increment(i, m, &wg)
+		go incrementCLH(i, m, &wg)
 	}
 	wg.Wait()
 	elapsed := time.Since(start)
