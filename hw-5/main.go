@@ -7,7 +7,7 @@ import (
 )
 
 var x int = 0
-var max int = 1000
+var max int = 2000
 
 type Lock interface {
 	Lock(i int)
@@ -33,13 +33,13 @@ func main() {
 	start := time.Now()
 	var wg sync.WaitGroup
 
+	// var m TASLock
+	// var m TTASLock
 	// minDelay := 1 * time.Millisecond
 	// maxDelay := 10 * time.Millisecond
 	// var m Lock = NewBackoffLock(minDelay, maxDelay)
 
-	// var m TASLock
-
-	var m Lock = NewALock(max)
+	var m = NewALock(max)
 
 	for i := 0; i < max; i++ {
 		wg.Add(1)
