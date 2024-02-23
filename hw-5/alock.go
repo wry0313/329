@@ -22,15 +22,16 @@ func NewALock(capacity int) *ALock {
 	return ret
 }
 
-func (l *ALock) Lock(i int) {
+func (l *ALock) Lock(i int) int32 {
 	slot := (l.tail.Add(1)-1) % int32(l.size)
-	l.mySlotIndex[i] = int(slot)
+	// l.mySlotIndex[i] = int(slot)
 	for !l.flag[slot] {
 	}
+	return slot
 }
 
-func (l *ALock) Unlock(i int) {
-	slot := l.mySlotIndex[i]
+func (l *ALock) Unlock(i int, slot int) {
+	// slot := l.mySlotIndex[i]
 	l.flag[slot] = false
 	l.flag[(slot+1)%l.size] = true
 }

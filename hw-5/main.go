@@ -31,6 +31,21 @@ func increment(i int, m Lock, wg *sync.WaitGroup) {
 	}
 }
 
+func incrementALock(i int, m *ALock, wg *sync.WaitGroup) {
+	for {
+
+		slot := m.Lock(i)
+		if x >= max {
+			m.Unlock(i, int(slot))
+			wg.Done()
+			return
+		}
+		fmt.Println(x)
+		x++
+		m.Unlock(i, int(slot))
+	}
+}
+
 func incrementCLH(i int, m *CLHLock, wg *sync.WaitGroup) {
 	for {
 
@@ -48,6 +63,21 @@ func incrementCLH(i int, m *CLHLock, wg *sync.WaitGroup) {
 	}
 }
 
+func incrementMCS(i int, m *MCSLock, wg *sync.WaitGroup) {
+	for {
+		myNode := NewMCS_QNode()
+		m.Lock(myNode)
+		if x >= max {
+			m.Unlock(myNode)
+			wg.Done()
+			return
+		}
+		fmt.Println(x)
+		x++
+		m.Unlock(myNode)
+	}
+}
+
 func main() {
 
 	start := time.Now()
@@ -55,16 +85,20 @@ func main() {
 
 	// var m TASLock
 	// var m TTASLock
-	// minDelay := 1 * time.Millisecond
-	// maxDelay := 10 * time.Millisecond
-	// var m Lock = NewBackoffLock(minDelay, maxDelay)
+
+	minDelay := 1 * time.Millisecond
+	maxDelay := 5 * time.Millisecond
+	var m Lock = NewBackoffLock(minDelay, maxDelay)
 
 	// var m = NewALock(max)
-	var m = NewCLHLock()
+	// var m = NewCLHLock()
 
 	for i := 0; i < numGoRoutine; i++ {
 		wg.Add(1)
-		go incrementCLH(i, m, &wg)
+		go increment(i, m, &wg)
+		// go incrementALock(i, m, &wg)
+		// go incrementCLH(i, m, &wg)
+		// go incrementMCS(i, NewMCSLock(), &wg)
 	}
 	wg.Wait()
 	elapsed := time.Since(start)
