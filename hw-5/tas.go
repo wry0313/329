@@ -19,3 +19,9 @@ func (m *TASLock) Lock(i int) {
 func (m *TASLock) Unlock(i int) {
 	m.lock.Store(false)
 }
+
+func (m *TASLock) IsLocked() bool {
+	return m.lock.Load()
+}
+
+

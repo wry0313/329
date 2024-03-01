@@ -5,8 +5,8 @@ import (
 )
 
 type MCS_QNode struct {
-	locked *atomic.Bool
-	next   *atomic.Value
+	locked bool
+	next   *MCS_QNode
 }
 
 type MCSLock struct {
@@ -14,12 +14,10 @@ type MCSLock struct {
 }
 
 func NewMCS_QNode() *MCS_QNode {
-	var new_atomic atomic.Value
-	return &MCS_QNode{next: &new_atomic}
+	return &MCS_QNode{next: nil, locked: false}
 }
 
 func NewMCSLock() *MCSLock {
-	//newNode := NewMCS_QNode()
 
 	var newAtomicPointer atomic.Pointer[MCS_QNode]
 	newAtomicPointer.Store(nil)
@@ -27,30 +25,24 @@ func NewMCSLock() *MCSLock {
 }
 
 func (x *MCSLock) Lock(myNode *MCS_QNode) {
-	qnode := *myNode
 
-	pred := x.tail.Swap(&qnode)
+	pred := x.tail.Swap(myNode)
 	if pred != nil {
-		qnode.locked.Store(true)
-		pred.next.Store(&qnode)
-		for qnode.locked.Load() {
-
+		myNode.locked = true
+		pred.next = myNode
+		for myNode.locked {
 		}
 	}
 }
 
 func (x *MCSLock) Unlock(myNode *MCS_QNode) {
-	qnode := *myNode
-
-	if qnode.next.Load() == nil {
-
-		if x.tail.CompareAndSwap(&qnode, nil) {
+	if myNode.next == nil {
+		if x.tail.CompareAndSwap(myNode, nil) {
 			return
 		}
-
-		for qnode.next.Load() == nil {
+		for myNode.next == nil {
 		}
 	}
-	nextNode := qnode.next.Load().(*MCS_QNode)
-	nextNode.locked.Store(false)
+	nextNode := myNode.next
+	nextNode.locked = false
 }

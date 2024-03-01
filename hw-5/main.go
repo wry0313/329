@@ -8,7 +8,7 @@ import (
 
 var x int = 0
 
-const numGoRoutine int = 200
+const numGoRoutine int = 4
 const max = 20000
 
 type Lock interface {
@@ -65,7 +65,7 @@ func incrementCLH(i int, m *CLHLock, wg *sync.WaitGroup) {
 
 func incrementMCS(i int, m *MCSLock, wg *sync.WaitGroup) {
 	for {
-		myNode := NewMCS_QNode()
+	myNode := NewMCS_QNode()
 		m.Lock(myNode)
 		if x >= max {
 			m.Unlock(myNode)
@@ -86,19 +86,20 @@ func main() {
 	// var m TASLock
 	// var m TTASLock
 
-	minDelay := 1 * time.Millisecond
-	maxDelay := 5 * time.Millisecond
-	var m Lock = NewBackoffLock(minDelay, maxDelay)
+	// minDelay := 1 * time.Millisecond
+	// maxDelay := 5 * time.Millisecond
+	// var m Lock = NewBackoffLock(minDelay, maxDelay)
 
 	// var m = NewALock(max)
 	// var m = NewCLHLock()
+	var m = NewMCSLock()
 
 	for i := 0; i < numGoRoutine; i++ {
 		wg.Add(1)
-		go increment(i, m, &wg)
+		// go increment(i, m, &wg)
 		// go incrementALock(i, m, &wg)
 		// go incrementCLH(i, m, &wg)
-		// go incrementMCS(i, NewMCSLock(), &wg)
+		go incrementMCS(i, m, &wg)
 	}
 	wg.Wait()
 	elapsed := time.Since(start)
